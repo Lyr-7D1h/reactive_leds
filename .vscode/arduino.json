@@ -1,0 +1,6 @@
+{
+    "sketch": "reactive_led.ino",
+    "configuration": "cpu=atmega328old",
+    "board": "arduino:avr:nano",
+    "port": "/dev/ttyUSB0"
+}
