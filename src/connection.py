@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import serial
-import time
 
 
 class Connection:
@@ -40,13 +39,14 @@ connection = Connection()
 
 connection.reset()
 
-n = 59
-i = 0
-while True:
-    if i % 2 == 0:
-        connection.set(i, (200, 0, 0))
-    else:
-        connection.set(i, (0, 0, 200))
-    i += 1
-    connection.show()
-    i = i % n
+# n = 60
+# i = 0
+# for i in range(0, 60):
+#     if i % 2 == 0:
+#         connection.set(i, (200, 0, 0))
+#     else:
+#         connection.set(i, (0, 0, 200))
+#     i += 1
+#     i = i % n
+
+# connection.show()
