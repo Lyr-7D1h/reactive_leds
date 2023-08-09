@@ -34,9 +34,12 @@ Led Controller (arduino) ---usb--- Reactive Led Software (python)
 ```
 
 ## Roadmap
-- Amplitude detection
-- Frequency detection
-- Emotion based colors and patterns
+- Moving average sampling 
+- Bpm detection
+  - transition based on bpm
+- Audio metadata
+  - Title, artist, genre enc.
+- Frequency analysis
+  - Emotion based colors and patterns
   - Fourier transform: Get notes played in a song and link them to an emotion
 - Smooth transitions between patterns
-- Automatic transitions based on bpm
