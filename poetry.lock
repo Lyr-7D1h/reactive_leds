@@ -480,6 +480,20 @@ files = [
 diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
+name = "pyserial"
+version = "3.5"
+description = "Python Serial Port Extension"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyserial-3.5-py2.py3-none-any.whl", hash = "sha256:c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0"},
+    {file = "pyserial-3.5.tar.gz", hash = "sha256:3c77e014170dfffbd816e6ffc205e9842efb10be9f58ec16d3e8675b4925cddb"},
+]
+
+[package.extras]
+cp2110 = ["hidapi"]
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
@@ -527,4 +541,4 @@ numpy = ["NumPy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "2137175c11e374b6542902b7ce0167ec1e5d58d8a6bb50606c28e4b44830f485"
+content-hash = "babdb5c4651c8f31eadce9d44cfbaa473e538f126d9dd842be6579c9e0c2299e"

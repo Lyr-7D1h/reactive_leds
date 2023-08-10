@@ -5,82 +5,65 @@ Matplotlib and NumPy have to be installed.
 
 """
 import queue
-import sys
-
-from matplotlib.animation import FuncAnimation
-import matplotlib.pyplot as plt
+from threading import Thread
+import time
 import numpy as np
-import sounddevice as sd
-import args as a
-
-args = a.args
-
-sd.default.device = args.device
-
-device = sd.query_devices(sd.default.device, "output")
-samplerate = device["default_samplerate"]
-
-mapping = [args.channel - 1]
-q = queue.Queue()
+from config import config
+from audio import Audio
+from connection import Connection
+from plot import Plot
 
 
-def audio_callback(indata, frames, time, status):
-    """This is called (from a separate thread) for each audio block."""
-    if status:
-        print(status, file=sys.stderr)
-    # Fancy indexing with mapping creates a (necessary!) copy:
-    q.put(indata[:: args.downsample, mapping])
+plotter_queue: queue.Queue = queue.Queue()
+average = 0
+
+connection = Connection(config.serial, 60)
 
 
-def update_plot(frame):
-    """This is called by matplotlib for each plot update.
+def audio_update(indata: np.ndarray, frames: int, time):
+    data = indata[:: config.downsample, 0]
 
-    Typically, audio callbacks happen more frequently than plot updates,
-    therefore the queue tends to contain multiple blocks of audio data.
+    global average
+    average = np.average(data) + abs(data.min()) * 0.5
+    # intensity = int(average * 255)
+    # connection.all((intensity, intensity, intensity))
 
-    """
-    global plotdata
+    if config.debug:
+        plotter_queue.put(data)
+
+
+def serial_update():
     while True:
-        try:
-            data = q.get_nowait()
-        except queue.Empty:
-            break
-        shift = len(data)
-        plotdata = np.roll(plotdata, -shift, axis=0)
-        plotdata[-shift:, :] = data
-    for column, line in enumerate(lines):
-        line.set_ydata(plotdata[:, column])
-    return lines
+        intensity = int(average * 255)
+        print(intensity)
+        connection.set(0, 60, (intensity, intensity, intensity))
+        connection.show()
 
 
-try:
-    length = int(args.window * samplerate / (1000 * args.downsample))
-    plotdata = np.zeros((length, 1))
+def main():
+    audio = Audio(config.device, on_update=audio_update)
+    plot = None
+    if config.debug:
+        print("Running in debug mode")
+        print("Adding plot")
+        plot = Plot(
+            interval=30,
+            window=config.window,
+            samplerate=audio.samplerate,
+            downsample=config.downsample,
+            data_queue=plotter_queue,
+        )
 
-    fig, ax = plt.subplots()
-    lines = ax.plot(plotdata)
+    try:
+        with audio.stream:
+            t = Thread(target=serial_update)
+            t.start()
+            if plot:
+                plot.show()
 
-    ax.axis((0, len(plotdata), -1, 1))
-    ax.set_yticks([0])
-    ax.yaxis.grid(True)
-    ax.tick_params(
-        bottom=False,
-        top=False,
-        labelbottom=False,
-        right=False,
-        left=False,
-        labelleft=False,
-    )
-    fig.tight_layout(pad=0)
+    except Exception as e:
+        config.parser.exit(type(e).__name__ + ": " + str(e))
 
-    stream = sd.InputStream(
-        channels=args.channel,
-        samplerate=samplerate,
-        callback=audio_callback,
-    )
-    ani = FuncAnimation(fig, update_plot, interval=args.interval, blit=True)
-    with stream:
-        plt.show()
 
-except Exception as e:
-    a.parser.exit(type(e).__name__ + ": " + str(e))
+if __name__ == "__main__":
+    main()

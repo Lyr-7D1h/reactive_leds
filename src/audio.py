@@ -1,39 +1,53 @@
-import pyaudio
-import wave
+import queue
+import sys
 
-CHUNK = 1024  # Number of frames in a buffer
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 44100
+import sounddevice as sd
+import numpy as np
+from config import config
 
-audio = pyaudio.PyAudio()
 
-# Open an audio stream
-stream = audio.open(
-    format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK
-)
+class Audio:
+    def __init__(self, device: str, on_update) -> None:
+        self.on_update = on_update
+        sd.default.device = device
+        self.device = sd.query_devices(sd.default.device, "output")
+        self.samplerate: float = self.device["default_samplerate"]
+        # https://python-sounddevice.readthedocs.io/en/0.3.15/api/streams.html
+        self.stream = sd.InputStream(
+            channels=config.channel,
+            device=self.device["index"],
+            samplerate=self.samplerate,
+            callback=self.update,
+        )
+        print("Listening on '", device, "' with sample rate", int(self.samplerate))
 
-print("Recording...")
+    def __enter__(self):
+        print("Starting audio stream")
+        self.stream.start()
 
-frames = []
-num_frames_to_record = int(RATE / CHUNK * 5)
+    def __exit__(self, type, value, traceback):
+        print("Stopping audio stream")
+        self.stream.close()
 
-for i in range(num_frames_to_record):
-    data = stream.read(CHUNK)
-    frames.append(data)
+    def update(self, indata: np.ndarray, frames: int, time, status: sd.CallbackFlags):
+        """This is called (from a separate thread) for each audio block."""
+        if status:
+            print(status, file=sys.stderr)
+        # print(indata)
+        self.on_update(indata, frames, time)
 
-print("Finished recording.")
 
-# Stop and close the audio stream
-stream.stop_stream()
-stream.close()
+# try:
+#     stream = sd.InputStream(
+#         channels=args.channel,
+#         samplerate=samplerate,
+#         callback=audio_update,
+#     )
+#     ani = FuncAnimation(
+#         fig, update_plot, interval=args.interval, blit=True, save_count=length
+#     )
+#     with stream:
+#         plt.show()
 
-# Terminate the PyAudio object
-audio.terminate()
-
-# Save the recorded audio to a WAV file (optional)
-with wave.open("output.wav", "wb") as wf:
-    wf.setnchannels(CHANNELS)
-    wf.setsampwidth(audio.get_sample_size(FORMAT))
-    wf.setframerate(RATE)
-    wf.writeframes(b"".join(frames))
+# except Exception as e:
+#     a.parser.exit(type(e).__name__ + ": " + str(e))
