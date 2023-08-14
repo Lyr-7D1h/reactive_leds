@@ -8,6 +8,9 @@ class Connection:
     def __init__(self, serial_path: str, led_amount: int) -> None:
         self.led_amount = led_amount
         try:
+            print(
+                f"Connecting to led strip with {led_amount} leds through {serial_path}"
+            )
             self.serial = serial.Serial(serial_path, 9600)
         except Exception as e:
             print(f"Could not open {serial_path}")
@@ -17,6 +20,7 @@ class Connection:
             self.serial.open()
 
     def __del__(self):
+        print("Closing connection")
         self.serial.close()
 
     # def all(self, rgb: tuple[int, int, int]):

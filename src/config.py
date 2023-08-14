@@ -1,3 +1,4 @@
+import glob
 import sounddevice as sd
 import argparse
 
@@ -37,8 +38,9 @@ run = subparsers.add_parser("run", help="Run the program")
 run.add_argument(
     "-d", "--device", type=int_or_str, help="input device (numeric ID or substring)"
 )
+default_serial = glob.glob("/dev/ttyUSB*")[0]
 run.add_argument(
-    "-s", "--serial", type=str, default="/dev/ttyUSB1", help="path to serial device"
+    "-s", "--serial", type=str, default=default_serial, help="path to serial device"
 )
 run.add_argument(
     "-c",
@@ -64,9 +66,7 @@ run.add_argument(
     help="visible time slot (default: %(default)s ms)",
 )
 run.add_argument("-b", "--blocksize", type=int, help="block size (in samples)")
-run.add_argument(
-    "-r", "--samplerate", type=float, help="sampling rate of audio device"
-)
+run.add_argument("-r", "--samplerate", type=float, help="sampling rate of audio device")
 run.add_argument(
     "-n",
     "--downsample",
@@ -83,5 +83,6 @@ if config.subcommand == "list":
         parser.exit(0)
     elif config.listings == "serial":
         # FIXME: add me
-        print("Listing serials")
+        for d in glob.glob("/dev/ttyUSB*"):
+            print(d)
         parser.exit(0)

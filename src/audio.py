@@ -8,7 +8,13 @@ from config import config
 
 
 class Audio:
-    def __init__(self, device_name: str, on_update, channel: int, samplerate: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        device_name: str,
+        on_update,
+        channel: int,
+        samplerate: Optional[int] = None,
+    ) -> None:
         self.on_update = on_update
         sd.default.device = device_name
         self.device = sd.query_devices(sd.default.device, "output")
@@ -30,7 +36,11 @@ class Audio:
         self.stream.start()
 
     def __exit__(self, type, value, traceback):
-        print("Stopping audio stream")
+        print("Closing audio stream")
+        self.stream.close()
+
+    def close(self):
+        print("Closing audio stream")
         self.stream.close()
 
     def update(

@@ -8,6 +8,7 @@ import queue
 import sys
 from threading import Thread
 import time
+from typing import TypedDict
 import numpy as np
 from config import config
 from audio import Audio
@@ -15,64 +16,89 @@ from connection import Connection
 from plot import Plot
 
 
-plotter_queue: queue.Queue = queue.Queue()
-average = 0
-
-connection = Connection(config.serial, 60)
-
-def audio_update(indata: np.ndarray, frames: int, time):
-    data = indata[:: config.downsample, config.channel]
-
-    global average
-    average = np.average(data) + abs(data.min()) * 0.5
-
-    if config.debug:
-        plotter_queue.put(data)
-audio = Audio(config.device, channel=config.channel, on_update=audio_update, samplerate=config.samplerate)
-
-def serial_update():
-    while True:
-        intensity = int(average * 255)
-        connection.set(0, 60, (intensity, intensity, intensity))
-        connection.show()
-
-serial_thread = Thread(target=serial_update)
-
-def close(_):
-    connection.set(0, 60, (0,0,0))
-    connection.__del__()
-    if plot:
-        plot.close()
-    sys.exit(0)
-
-plot = None
-if config.debug:
-    print("Running in debug mode")
-    plot = Plot(
-        interval=30,
-        window=config.window,
-        samplerate=audio.samplerate,
-        downsample=config.downsample,
-        data_queue=plotter_queue,
-        on_close=close
-    )
+class State(TypedDict):
+    should_close: bool
 
 
-def main():
-    try:
-        with audio.stream:
-            serial_thread.start()
-            if plot:
-                # Show plot in main thread
-                plot.show()
-            else:
-                # Do nothing in main thread
-                while True:
-                    time.sleep(200)
+class ReactiveLed:
+    def __init__(self) -> None:
+        self.state: State = {"should_close": False}
+        self.data_queue: queue.Queue = queue.Queue()
+        self.plotter_queue: queue.Queue = queue.Queue()
+        self.average = 0
 
-    except Exception as e:
-        config.parser.exit(type(e).__name__ + ": " + str(e))
+        self.audio = Audio(
+            config.device,
+            channel=config.channel,
+            on_update=self.audio_update,
+            samplerate=config.samplerate,
+        )
+        if config.debug:
+            print("Running in debug mode")
+            self.plot = Plot(
+                interval=30,
+                window=config.window,
+                samplerate=self.audio.samplerate,
+                downsample=config.downsample,
+                data_queue=self.plotter_queue,
+                on_close=self.close,
+            )
+        self.connection = Connection(config.serial, 60)
+        try:
+            with self.audio.stream:
+                if self.plot:
+                    serial_thread = Thread(target=self.serial_update)
+                    serial_thread.start()
+                    # Show plot in main thread
+                    self.plot.show()
+                else:
+                    self.serial_update()
+        except KeyboardInterrupt:
+            self.close()
+        except Exception as e:
+            print(e)
+            self.close()
+
+    def close(self, *args):
+        self.state["should_close"] = True
+        time.sleep(0.4)
+        if self.connection.available():
+            self.connection.set(0, 60, (0, 0, 0))
+        self.connection.__del__()
+        self.audio.close()
+        if self.plot:
+            self.plot.close()
+        sys.exit(0)
+
+    def audio_update(self, indata: np.ndarray, frames: int, time):
+        data = indata[:: config.downsample, config.channel - 1]
+
+        if self.plot:
+            self.plotter_queue.put(data)
+            self.data_queue.put(data)
+
+    def serial_update(self):
+        """Manual loop"""
+        while True:
+            if self.state["should_close"]:
+                print("Closing serial_update loop")
+                break
+            try:
+                data: np.ndarray = self.data_queue.get_nowait()
+            except queue.Empty:
+                time.sleep(0.01)
+                continue
+
+            average = np.average(data) + abs(data.min()) * 0.5
+            intensity = int(average * 255)
+
+            try:
+                self.connection.set(0, 60, (intensity, intensity, intensity))
+                self.connection.show()
+            except Exception as e:
+                print(e)
+                self.close()
 
 
 if __name__ == "__main__":
-    main()
+    ReactiveLed()
