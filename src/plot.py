@@ -15,6 +15,7 @@ class Plot:
         downsample: float,
         data_queue: queue.Queue,
         on_update: Optional[Callable[[Any], None]] = None,
+        on_close: Optional[Callable[[Any], None]] = None,
     ) -> None:
         length = int(window * samplerate / (1000 * downsample))
         self.plotdata = np.zeros((length, 2))
@@ -23,6 +24,8 @@ class Plot:
 
         fig, ax = plt.subplots()
         self.lines = ax.plot(self.plotdata)
+        if on_close is not None:
+            fig.canvas.mpl_connect("close_event", on_close)
 
         ax.axis((0, len(self.plotdata), -1, 1))
         ax.set_yticks([0])
@@ -45,7 +48,12 @@ class Plot:
         )
 
     def show(self):
+        print("Showing plot")
         plt.show()
+
+    def close(self):
+        print("Closing plot")
+        plt.close()
 
     def update(self, frame):
         """This is called by matplotlib for each plot update.
