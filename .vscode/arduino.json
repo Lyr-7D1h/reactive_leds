@@ -2,5 +2,5 @@
     "sketch": "led_controller/led_controller.ino",
     "configuration": "cpu=atmega328old",
     "board": "arduino:avr:nano",
-    "port": "/dev/ttyUSB3"
+    "port": "/dev/ttyUSB2"
 }

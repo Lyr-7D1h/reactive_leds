@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import time
 import serial
 
 
@@ -22,18 +21,6 @@ class Connection:
     def __del__(self):
         print("Closing connection")
         self.serial.close()
-
-    # def all(self, rgb: tuple[int, int, int]):
-    #     for i in range(0, self.led_amount):
-    #         self.set(i, rgb)
-    #     self.show()
-
-    # def reset(
-    #     self,
-    # ):
-    #     for i in range(0, 60):
-    #         self.set(i, (10, 10, 10))
-    #     self.show()
 
     def available(self) -> bool:
         return self.serial.is_open
@@ -60,23 +47,3 @@ class Connection:
         self.serial.write(bytearray([255, 0, 0, 0, 0]))
         # probably don't need this
         self.serial.flush()
-
-
-# connection = Connection()
-
-# connection.reset()
-
-# n = 60
-# # i = 0
-# for i in range(0, 60):
-#     if i % 2 == 0:
-#         connection.set(i, (200, 0, 0))
-#     else:
-#         connection.set(i, (0, 0, 200))
-#     i += 1
-#     i = i % n
-
-# connection.show()
-# connection.serial.flush()
-
-# time.sleep(1)
