@@ -35,7 +35,6 @@ def audio_update(indata: np.ndarray, frames: int, time):
 def serial_update():
     while True:
         intensity = int(average * 255)
-        print(intensity)
         connection.set(0, 60, (intensity, intensity, intensity))
         connection.show()
 

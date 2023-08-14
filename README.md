@@ -33,6 +33,11 @@ poetry run src/main.py
 Led Controller (arduino) ---usb--- Reactive Led Software (python)
 ```
 
+## Bugs
+- Threading: handle failing devices and wait for failing devices 
+  - When power from led wait until serial device is back
+- Audio: Find default output device
+
 ## Roadmap
 - Moving average sampling 
 - Bpm detection
@@ -43,3 +48,4 @@ Led Controller (arduino) ---usb--- Reactive Led Software (python)
   - Emotion based colors and patterns
   - Fourier transform: Get notes played in a song and link them to an emotion
 - Smooth transitions between patterns
+- Web interface

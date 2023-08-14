@@ -31,6 +31,9 @@ class Connection:
     #         self.set(i, (10, 10, 10))
     #     self.show()
 
+    def available(self) -> bool:
+        return self.serial.is_open
+
     def set(self, start: int, end: int, rgb: tuple[int, int, int]):
         if start == 255:
             raise Exception("Index 255 is reserved for showing")

@@ -29,10 +29,16 @@ class Audio:
         print("Stopping audio stream")
         self.stream.close()
 
-    def update(self, indata: np.ndarray, frames: int, time, status: sd.CallbackFlags):
+    def update(
+        self,
+        indata: np.ndarray,
+        frames: int,
+        time,
+        status: sd.CallbackFlags,
+    ):
         """This is called (from a separate thread) for each audio block."""
         if status:
-            print(status, file=sys.stderr)
+            print("Audio:", status, file=sys.stderr)
         # print(indata)
         self.on_update(indata, frames, time)
 

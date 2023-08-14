@@ -1,4 +1,5 @@
 import queue
+from typing import Any, Callable, Optional
 import numpy as np
 from config import config
 from matplotlib.animation import FuncAnimation
@@ -13,10 +14,12 @@ class Plot:
         samplerate: float,
         downsample: float,
         data_queue: queue.Queue,
+        on_update: Optional[Callable[[Any], None]] = None,
     ) -> None:
         length = int(window * samplerate / (1000 * downsample))
         self.plotdata = np.zeros((length, 2))
         self.data_queue = data_queue
+        self.on_update = on_update
 
         fig, ax = plt.subplots()
         self.lines = ax.plot(self.plotdata)
@@ -51,6 +54,8 @@ class Plot:
         therefore the queue tends to contain multiple blocks of audio data.
 
         """
+        if self.on_update:
+            self.on_update(frame)
         while True:
             try:
                 data: np.ndarray = self.data_queue.get_nowait()
