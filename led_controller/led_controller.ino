@@ -6,6 +6,7 @@
 #define NUM_LEDS    60
 
 CRGB leds[NUM_LEDS];
+int broken_leds[8] = {0, 1, 8,12, 14, 15, 20, 25};
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -18,8 +19,9 @@ void setup() {
   }
 
   // Disable broken leds
-  leds[25] = CRGB (0,0,0);
-  leds[1] = CRGB (0,0,0);
+  for (int led : broken_leds) {
+    leds[led] = CRGB (0,0,0);
+  }
 
   FastLED.show();
 }
@@ -52,16 +54,23 @@ void loop() {
     }
 
     // Serial.print(+buff[0]);
-    // Serial.print(" ")
+    // Serial.print(" ");
     // Serial.print(+buff[1]);
     // Serial.println();
 
     for (int i=buff[0]; i < buff[1]; i++) {
-      // Serial.println(i);
-      if (i == 25 || i == 1) {
-        continue;
+      bool found = false;
+      // TODO optimize
+      for (int led: broken_leds) {
+        if (i == led) {
+          found = true;
+          break;
+        }
       }
-      leds[i] = CRGB(buff[2],buff[3],buff[4]);
+
+      if (!found) {
+        leds[i] = CRGB(buff[2],buff[3],buff[4]);
+      }
     }
   }
 }
