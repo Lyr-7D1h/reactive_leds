@@ -51,6 +51,7 @@ class Config(BaseModel):
     samplerate: Optional[int] = None
     # display every Nth sample (default: %(default)s)
     downsample: int = 10
+    amount_leds: int = 60
 
 
 def get_config():
