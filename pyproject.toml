@@ -13,6 +13,8 @@ sounddevice = "^0.4.6"
 numpy = "^1.25.2"
 matplotlib = "^3.7.2"
 pyserial = "^3.5"
+toml = "^0.10.2"
+pydantic = "^2.1.1"
 
 
 [build-system]

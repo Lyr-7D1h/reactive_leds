@@ -4,13 +4,12 @@ from typing import Optional
 
 import sounddevice as sd
 import numpy as np
-from config import config
 
 
 class Audio:
     def __init__(
         self,
-        device_name: str,
+        device_name: str | int,
         on_update,
         channel: int,
         samplerate: Optional[int] = None,

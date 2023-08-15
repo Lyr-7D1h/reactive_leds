@@ -1,104 +1,54 @@
-#!/usr/bin/env python3
-"""Plot the live microphone signal(s) with matplotlib.
+#!/usr/bin/env python
+import glob
+import sounddevice as sd
+import argparse
 
-Matplotlib and NumPy have to be installed.
+from config import get_config
 
-"""
-import queue
-import sys
-from threading import Thread
-import time
-from typing import TypedDict
-import numpy as np
-from config import config
-from audio import Audio
 from connection import Connection
-from plot import Plot
+from reactive_led import ReactiveLed
 
 
-class State(TypedDict):
-    should_close: bool
+serial_devices = glob.glob("/dev/ttyUSB*")
+if len(serial_devices) > 0:
+    default_serial = serial_devices[0]
+else:
+    default_serial = "/dev/ttyUSB1"
+
+parser = argparse.ArgumentParser(
+    description=__doc__,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    parents=[],
+)
+parser.add_argument("-c", "--config", type=str)
+subparsers = parser.add_subparsers(title="Subcommands", dest="subcommand")
+list = subparsers.add_parser("list", help="List")
+list.add_argument("listings", choices=["serial", "output"])
+subparsers.add_parser("eval", help="Set specific leds")
+run = subparsers.add_parser("run", help="Run the program")
 
 
-class ReactiveLed:
-    def __init__(self) -> None:
-        self.state: State = {"should_close": False}
-        self.data_queue: queue.Queue = queue.Queue()
-        self.plotter_queue: queue.Queue = queue.Queue()
-        self.average = 0
+args = parser.parse_args()
 
-        self.audio = Audio(
-            config.device,
-            channel=config.channel,
-            on_update=self.audio_update,
-            samplerate=config.samplerate,
-        )
-        if config.debug:
-            print("Running in debug mode")
-            self.plot = Plot(
-                interval=30,
-                window=config.window,
-                samplerate=self.audio.samplerate,
-                downsample=config.downsample,
-                data_queue=self.plotter_queue,
-                on_close=self.close,
-            )
-        self.connection = Connection(config.serial, 60)
-        try:
-            with self.audio.stream:
-                if self.plot:
-                    serial_thread = Thread(target=self.serial_update)
-                    serial_thread.start()
-                    # Show plot in main thread
-                    self.plot.show()
-                else:
-                    self.serial_update()
-        except KeyboardInterrupt:
-            self.close()
-        except Exception as e:
-            print(e)
-            self.close()
-
-    def close(self, *args):
-        self.state["should_close"] = True
-        time.sleep(0.4)
-        if self.connection.available():
-            self.connection.set(0, 60, (0, 0, 0))
-        self.connection.__del__()
-        self.audio.close()
-        if self.plot:
-            self.plot.close()
-        sys.exit(0)
-
-    def audio_update(self, indata: np.ndarray, frames: int, time):
-        data = indata[:: config.downsample, config.channel - 1]
-
-        if self.plot:
-            self.plotter_queue.put(data)
-            self.data_queue.put(data)
-
-    def serial_update(self):
-        """Manual loop"""
-        while True:
-            if self.state["should_close"]:
-                print("Closing serial_update loop")
-                break
-            try:
-                data: np.ndarray = self.data_queue.get_nowait()
-            except queue.Empty:
-                time.sleep(0.01)
-                continue
-
-            average = np.average(data) + abs(data.min()) * 0.5
-            intensity = int(average * 255)
-
-            try:
-                self.connection.set(0, 60, (intensity, intensity, intensity))
-                self.connection.show()
-            except Exception as e:
-                print(e)
-                self.close()
-
-
-if __name__ == "__main__":
-    ReactiveLed()
+config = get_config()
+if args.subcommand == "list":
+    if args.listings == "output":
+        print(sd.query_devices())
+        parser.exit(0)
+    elif args.listings == "serial":
+        # FIXME: add me
+        for d in glob.glob("/dev/ttyUSB*"):
+            print(d)
+        parser.exit(0)
+elif args.subcommand == "eval":
+    connection = Connection(args.serial, 60)
+    while True:
+        led_start = int(input("Led Start: "))
+        led_end = int(input("Led End: "))
+        r = int(input("R: "))
+        g = int(input("G: "))
+        b = int(input("B: "))
+        connection.set(led_start, led_end, (r, g, b))
+        connection.show()
+else:
+    ReactiveLed(config)

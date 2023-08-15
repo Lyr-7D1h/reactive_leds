@@ -1,7 +1,6 @@
 import queue
 from typing import Any, Callable, Optional
 import numpy as np
-from config import config
 from matplotlib.animation import FuncAnimation
 import matplotlib.pyplot as plt
 
