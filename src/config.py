@@ -2,6 +2,8 @@ import glob
 import sounddevice as sd
 import argparse
 
+from connection import Connection
+
 
 def int_or_str(text):
     """Helper function for argument parsing."""
@@ -11,17 +13,11 @@ def int_or_str(text):
         return text
 
 
-# list.
-#     "",
-#     "--list-devices",
-#     action="store_true",
-#     help="show list of audio devices and exit",
-# )
-
-# config, remaining = parser.parse_known_args()
-# if config.list_devices:
-#     print(sd.query_devices())
-#     parser.exit(0)
+serial_devices = glob.glob("/dev/ttyUSB*")
+if len(serial_devices) > 0:
+    default_serial = serial_devices[0]
+else:
+    default_serial = "/dev/ttyUSB1"
 
 parser = argparse.ArgumentParser(
     description=__doc__,
@@ -34,11 +30,15 @@ subparsers = parser.add_subparsers(title="Subcommands", dest="subcommand")
 list = subparsers.add_parser("list", help="List")
 list.add_argument("listings", choices=["serial", "output"])
 
+eval = subparsers.add_parser("eval", help="Set specific leds")
+eval.add_argument(
+    "-s", "--serial", type=str, default=default_serial, help="path to serial device"
+)
+
 run = subparsers.add_parser("run", help="Run the program")
 run.add_argument(
     "-d", "--device", type=int_or_str, help="input device (numeric ID or substring)"
 )
-default_serial = glob.glob("/dev/ttyUSB*")[0]
 run.add_argument(
     "-s", "--serial", type=str, default=default_serial, help="path to serial device"
 )
@@ -86,3 +86,13 @@ if config.subcommand == "list":
         for d in glob.glob("/dev/ttyUSB*"):
             print(d)
         parser.exit(0)
+elif config.subcommand == "eval":
+    connection = Connection(config.serial, 60)
+    while True:
+        led_start = int(input("Led Start: "))
+        led_end = int(input("Led End: "))
+        r = int(input("R: "))
+        g = int(input("G: "))
+        b = int(input("B: "))
+        connection.set(led_start, led_end, (r, g, b))
+        connection.show()
