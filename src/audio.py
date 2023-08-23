@@ -21,14 +21,17 @@ class Audio:
             self.samplerate: float = self.device["default_samplerate"]
         else:
             self.samplerate = samplerate
+        index = self.device["index"]
         # https://python-sounddevice.readthedocs.io/en/0.3.15/api/streams.html
         self.stream = sd.InputStream(
             channels=channel,
-            device=self.device["index"],
+            device=index,
             samplerate=self.samplerate,
             callback=self.update,
         )
-        print("Listening on '", device_name, "' with sample rate", int(self.samplerate))
+        print(
+            f"Listening on '{device_name}' ({index}) with sample rate {int(self.samplerate)}"
+        )
 
     def __enter__(self):
         print("Starting audio stream")

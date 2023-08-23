@@ -11,11 +11,11 @@ int broken_leds[8] = {0, 1, 8,12, 14, 15, 20, 25};
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   
   FastLED.addLeds<LED_TYPE, LED_PIN, GRB>(leds, NUM_LEDS);
   for (int i = 0; i <= NUM_LEDS - 1; i++) {
-    leds[i] = CRGB ( 10, 10, 10);
+    leds[i] = CRGB ( 10, 10, 10 );
   }
 
   // Disable broken leds
@@ -27,29 +27,32 @@ void setup() {
 }
 
 // Thread and use
-void error_indicator() {
+void error(String message) {
+  Serial.println(message);
   digitalWrite(LED_BUILTIN, HIGH);  
   delay(100);                      
   digitalWrite(LED_BUILTIN, LOW);   
 }
 
-void loop() {
-  if (Serial.available()) {
+void set_leds() {
     byte buff[5];
     size_t n = Serial.readBytes(buff, 5);
+    // byte buff[NUM_LEDS * 3];
+    // Serial.readBytesUntil('0', buff, NUM_LEDS * 3);
     
     if (n != 5) {
-      error_indicator();
+      error("Read more than 5 bytes");
       return;
     }
 
     if (buff[0] == 255 || buff[1] == 255) {
+      Serial.println("Showing");
       FastLED.show();
       return;
     }
 
     if (buff[0] > buff[1]) {
-      error_indicator();
+      error("Start of led range can't be bigger than end");
       return;
     }
 
@@ -72,5 +75,11 @@ void loop() {
         leds[i] = CRGB(buff[2],buff[3],buff[4]);
       }
     }
+
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+      set_leds();
   }
 }

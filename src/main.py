@@ -41,7 +41,7 @@ if args.subcommand == "list":
             print(d)
         parser.exit(0)
 elif args.subcommand == "eval":
-    connection = Connection(args.serial, 60)
+    connection = Connection(config.serial, 60)
     while True:
         led_start = int(input("Led Start: "))
         led_end = int(input("Led End: "))

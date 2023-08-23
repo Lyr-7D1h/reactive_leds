@@ -7,6 +7,7 @@ import numpy as np
 from config import Config
 from audio import Audio
 from connection import Connection
+from effects.fire import Fire
 from plot import Plot
 
 
@@ -39,6 +40,7 @@ class ReactiveLed:
                 on_close=self.close,
             )
         self.connection = Connection(config.serial, 60)
+        self.effect = Fire(self.config, self.connection)
         try:
             with self.audio.stream:
                 if self.plot:
@@ -49,17 +51,18 @@ class ReactiveLed:
                 else:
                     self.serial_update()
         except KeyboardInterrupt:
+            print("Keyboard interrupt")
             self.close()
         except Exception as e:
             print(e)
             self.close()
 
     def close(self, *args):
+        print("Quiting gracefully")
         self.state["should_close"] = True
         time.sleep(0.4)
         if self.connection.available():
             self.connection.set(0, 60, (0, 0, 0))
-        self.connection.__del__()
         self.audio.close()
         if self.plot:
             self.plot.close()
@@ -73,6 +76,7 @@ class ReactiveLed:
             self.data_queue.put(data)
 
     def serial_update(self):
+        time.sleep(2)
         """Manual loop"""
         while True:
             if self.state["should_close"]:
@@ -81,17 +85,22 @@ class ReactiveLed:
             try:
                 data: np.ndarray = self.data_queue.get_nowait()
             except queue.Empty:
-                time.sleep(0.01)
                 continue
 
-            average = np.average(data) + abs(data.min()) * 0.5
-            r = np.linspace(0, 255, 50)
-            g = np.linspace(0, 20, 50)
-            b = np.linspace(0, 20, 50)
-            rgb = np.column_stack((r, g, b))
-            rgb = rgb[int(average * 50)].astype(int)
+            # average = (np.average(data) + abs(data.min()) * 0.5) / 2
 
-            # intensity = int(average * 255)
+            # intensity = int(average * 3 * 255)
+            # print(intensity)
+            # rgb = (intensity, intensity, intensity)
+
+            # r = np.linspace(0, 255, 50)
+            # g = np.linspace(0, 20, 50)
+            # b = np.linspace(0, 20, 50)
+            # rgb = np.column_stack((r, g, b))
+            # rgb = rgb[int(average * 50)].astype(int)
+
+            self.effect.update()
+
             # rgb = (
             #     min(int(2.0 * average * 255), 255),
             #     min(int(1.8 * (1 - average) * 255), 255),
@@ -99,9 +108,9 @@ class ReactiveLed:
             # )
             # rgb = (0, 0, 0)
 
-            try:
-                self.connection.set(0, 60, rgb)
-                self.connection.show()
-            except Exception as e:
-                print(e)
-                self.close()
+            # try:
+            #     self.connection.set(0, 60, rgb)
+            #     self.connection.show()
+            # except Exception as e:
+            #     print(e)
+            #     self.close()

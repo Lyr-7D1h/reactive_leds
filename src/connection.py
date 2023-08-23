@@ -10,11 +10,20 @@ class Connection:
             print(
                 f"Connecting to led strip with {led_amount} leds through {serial_path}"
             )
-            self.serial = serial.Serial(serial_path, 9600)
+            self.serial = serial.Serial(
+                serial_path,
+                9600,
+                timeout=1,
+                dsrdtr=True,
+                rtscts=True,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE,
+                bytesize=serial.EIGHTBITS,
+            )
         except Exception as e:
             print(f"Could not open {serial_path}")
             print(e)
-            exit(1)
+            raise e
         if not self.serial.is_open:
             self.serial.open()
 
@@ -30,17 +39,16 @@ class Connection:
             raise Exception("Index 255 is reserved for showing")
         if end == 255:
             raise Exception("Index 255 is reserved for showing")
-        self.serial.write(
-            bytearray(
-                [
-                    start,
-                    end,
-                    rgb[0],
-                    rgb[1],
-                    rgb[2],
-                ]
-            )
+        data = bytearray(
+            [
+                start,
+                end,
+                rgb[0],
+                rgb[1],
+                rgb[2],
+            ]
         )
+        self.serial.write(data)
         self.serial.flush()
 
     def show(self):
