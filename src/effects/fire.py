@@ -1,5 +1,5 @@
 import random
-from config import Config
+import time
 from effects.base import BaseEffect
 
 
@@ -28,19 +28,20 @@ def heatcolor(temperature: int) -> tuple[int, int, int]:
 
 class Fire(BaseEffect):
     def init(self):
-        self.heat = [0] * 255
+        self.heat_map = [0] * self.config.amount_leds
         self.cooling = 25
 
     def update(self):
+        time.sleep(0.1)
         # Step 1.  Cool down every cell a little
         for i in range(0, self.config.amount_leds):
-            self.heat[i] -= random.randint(
+            self.heat_map[i] -= random.randint(
                 0, int(((self.cooling * 10) / self.config.amount_leds) + 2)
             )
         # Step 2.  Heat from each cell drifts 'up' and diffuses a little
         for k in range(self.config.amount_leds - 1, 2, -1):
-            self.heat[k] = int(
-                (self.heat[k - 1] + self.heat[k - 2] + self.heat[k - 2]) / 3
+            self.heat_map[k] = int(
+                (self.heat_map[k - 1] + self.heat_map[k - 2] + self.heat_map[k - 2]) / 3
             )
         # Step 3.  Randomly ignite new 'sparks' of heat near the bottom
         # if( random8() < SPARKING ) {
@@ -49,7 +50,7 @@ class Fire(BaseEffect):
         # }
         if random.randint(0, 256):
             y = random.randint(0, 7)
-            self.heat[y] += random.randint(160, 255)
+            self.heat_map[y] += random.randint(160, 255)
 
         # Step 4.  Map from heat cells to LED colors
         # for( int j = 0; j < NUM_LEDS; j++) {
@@ -62,7 +63,7 @@ class Fire(BaseEffect):
         #   }
         #   leds[pixelnumber] = color;
         # }
-        for j in range(0, self.config.amount_leds):
-            color = heatcolor(self.heat[j])
-            self.connection.set(j, j + 1, color)
-        self.connection.show()
+        color_data = [
+            heatcolor(self.heat_map[j]) for j in range(0, self.config.amount_leds)
+        ]
+        self.connection.write(color_data)

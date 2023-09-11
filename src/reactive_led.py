@@ -62,7 +62,7 @@ class ReactiveLed:
         self.state["should_close"] = True
         time.sleep(0.4)
         if self.connection.available():
-            self.connection.set(0, 60, (0, 0, 0))
+            self.connection.clear()
         self.audio.close()
         if self.plot:
             self.plot.close()
@@ -77,6 +77,8 @@ class ReactiveLed:
 
     def serial_update(self):
         time.sleep(2)
+        self.connection.clear()
+        print("Starting serial update loop")
         """Manual loop"""
         while True:
             if self.state["should_close"]:
@@ -87,11 +89,19 @@ class ReactiveLed:
             except queue.Empty:
                 continue
 
-            # average = (np.average(data) + abs(data.min()) * 0.5) / 2
+            average = (np.average(data) + abs(data.min())) * 0.5
 
-            # intensity = int(average * 3 * 255)
-            # print(intensity)
-            # rgb = (intensity, intensity, intensity)
+            intensity = int(average * 255)
+            rgb = (intensity, intensity, intensity)
+            # print(rgb)
+            # print(average, intensity)
+
+            try:
+                self.connection.fill(rgb)
+                # self.connection.show()
+            except Exception as e:
+                print(e)
+                self.close()
 
             # r = np.linspace(0, 255, 50)
             # g = np.linspace(0, 20, 50)
@@ -99,7 +109,7 @@ class ReactiveLed:
             # rgb = np.column_stack((r, g, b))
             # rgb = rgb[int(average * 50)].astype(int)
 
-            self.effect.update()
+            # self.effect.update()
 
             # rgb = (
             #     min(int(2.0 * average * 255), 255),
@@ -107,10 +117,3 @@ class ReactiveLed:
             #     0,
             # )
             # rgb = (0, 0, 0)
-
-            # try:
-            #     self.connection.set(0, 60, rgb)
-            #     self.connection.show()
-            # except Exception as e:
-            #     print(e)
-            #     self.close()

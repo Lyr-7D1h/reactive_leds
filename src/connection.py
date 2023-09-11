@@ -12,7 +12,7 @@ class Connection:
             )
             self.serial = serial.Serial(
                 serial_path,
-                9600,
+                250000,
                 timeout=1,
                 dsrdtr=True,
                 rtscts=True,
@@ -31,27 +31,31 @@ class Connection:
         print("Closing connection")
         self.serial.close()
 
+    def clear(self):
+        self.serial.write(bytearray([0] * self.led_amount * 3))
+        self.serial.flush()
+
     def available(self) -> bool:
         return self.serial.is_open
 
-    def set(self, start: int, end: int, rgb: tuple[int, int, int]):
-        if start == 255:
-            raise Exception("Index 255 is reserved for showing")
-        if end == 255:
-            raise Exception("Index 255 is reserved for showing")
-        data = bytearray(
-            [
-                start,
-                end,
-                rgb[0],
-                rgb[1],
-                rgb[2],
-            ]
-        )
-        self.serial.write(data)
+    def write(self, data: list[int]):
+        self.serial.write(bytearray(data))
         self.serial.flush()
 
-    def show(self):
-        self.serial.write(bytearray([255, 0, 0, 0, 0]))
-        # probably don't need this
+    def send(self, data: list[tuple[int, int, int]]):
+        byte_data = bytearray([color for rgb in data for color in rgb])
+        self.serial.write(byte_data)
         self.serial.flush()
+
+    def fill(self, rgb: tuple[int, int, int]):
+        data = [color for color in rgb for _ in range(0, self.led_amount)]
+        self.write(data)
+
+    def set(self, start: int, end: int, rgb: tuple[int, int, int]):
+        data = [color for color in rgb for _ in range(start, end)]
+        self.write(data)
+
+    # def show(self):
+    #     self.serial.write(bytearray([255, 0, 0, 0, 0]))
+    #     # probably don't need this
+    #     self.serial.flush()

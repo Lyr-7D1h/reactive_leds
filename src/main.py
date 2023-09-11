@@ -49,6 +49,5 @@ elif args.subcommand == "eval":
         g = int(input("G: "))
         b = int(input("B: "))
         connection.set(led_start, led_end, (r, g, b))
-        connection.show()
 else:
     ReactiveLed(config)
