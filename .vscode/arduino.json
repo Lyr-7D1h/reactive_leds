@@ -1,5 +1,5 @@
 {
-    "sketch": "led_controller/led_controller.ino",
+    "sketch": "firmware/firmware.ino",
     "configuration": "cpu=atmega328old",
     "board": "arduino:avr:nano",
     "port": "/dev/ttyUSB0"

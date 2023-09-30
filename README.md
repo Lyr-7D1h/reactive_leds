@@ -34,12 +34,12 @@ Led Controller (arduino) ---usb--- Reactive Led Software (python)
 ```
 
 ## Bugs
-- Threading: handle failing devices and wait for failing devices 
-  - When power from led wait until serial device is back
+- When leds powered off wait until serial device is back
 - Audio: Find default output device
 - Make serial async 
 
 ## Roadmap
+- Update frequencies
 - Moving average sampling 
 - Bpm detection
   - transition based on bpm
