@@ -55,21 +55,4 @@ class Audio:
         """This is called (from a separate thread) for each audio block."""
         if status:
             print("Audio:", status, file=sys.stderr)
-        # print(indata)
         self.on_update(indata, frames, time)
-
-
-# try:
-#     stream = sd.InputStream(
-#         channels=args.channel,
-#         samplerate=samplerate,
-#         callback=audio_update,
-#     )
-#     ani = FuncAnimation(
-#         fig, update_plot, interval=args.interval, blit=True, save_count=length
-#     )
-#     with stream:
-#         plt.show()
-
-# except Exception as e:
-#     a.parser.exit(type(e).__name__ + ": " + str(e))
