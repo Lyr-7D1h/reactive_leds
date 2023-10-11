@@ -39,8 +39,8 @@ class ReactiveLed:
                 data_queue=self.plotter_queue,
                 on_close=self.close,
             )
-        self.connection = Connection(config.serial, 60)
-        self.effect = Fire(self.config, self.connection)
+        self.connection = Connection(config.serial, 60, self.config.disabled_leds)
+        # self.effect = Fire(self.config, self.connection)
         try:
             with self.audio.stream:
                 if self.plot:
@@ -62,7 +62,7 @@ class ReactiveLed:
         self.state["should_close"] = True
         time.sleep(0.4)
         if self.connection.available():
-            self.connection.set(0, 60, (0, 0, 0))
+            self.connection.clear()
         self.audio.close()
         if self.plot:
             self.plot.close()
@@ -76,7 +76,8 @@ class ReactiveLed:
             self.data_queue.put(data)
 
     def serial_update(self):
-        time.sleep(2)
+        self.connection.clear()
+        print("Starting serial update loop")
         """Manual loop"""
         while True:
             if self.state["should_close"]:
@@ -87,19 +88,52 @@ class ReactiveLed:
             except queue.Empty:
                 continue
 
-            # average = (np.average(data) + abs(data.min()) * 0.5) / 2
+            # 0.0 - 1.0
+            average = (np.average(data) + abs(data.min())) * 0.5
 
-            # intensity = int(average * 3 * 255)
-            # print(intensity)
-            # rgb = (intensity, intensity, intensity)
+            intensity = int(average * 255)
+            rgb = (intensity, intensity, intensity)
 
+            # range = [
+            #     (250, 250, 110),
+            #     (225, 244, 112),
+            #     (201, 238, 115),
+            #     (178, 231, 119),
+            #     (156, 223, 124),
+            #     (134, 215, 128),
+            #     (114, 207, 133),
+            #     (94, 198, 136),
+            #     (74, 189, 140),
+            #     (55, 179, 142),
+            #     (35, 170, 143),
+            #     (11, 160, 143),
+            #     (0, 150, 142),
+            #     (0, 140, 139),
+            #     (0, 130, 136),
+            #     (0, 120, 130),
+            #     (16, 110, 124),
+            #     (27, 100, 116),
+            #     (34, 91, 108),
+            #     (39, 81, 98),
+            #     (42, 72, 88),
+            # ]
+            # range.reverse()
+            # rgb = range[int(len(range) * average)]
+            # print(rgb)
             # r = np.linspace(0, 255, 50)
             # g = np.linspace(0, 20, 50)
             # b = np.linspace(0, 20, 50)
             # rgb = np.column_stack((r, g, b))
             # rgb = rgb[int(average * 50)].astype(int)
 
-            self.effect.update()
+            # try:
+                # self.connection.fill(rgb)
+                # self.connection.show()
+            # except Exception as e:
+            #     print(e)
+            #     self.close()
+
+            # self.effect.update()
 
             # rgb = (
             #     min(int(2.0 * average * 255), 255),
@@ -107,10 +141,3 @@ class ReactiveLed:
             #     0,
             # )
             # rgb = (0, 0, 0)
-
-            # try:
-            #     self.connection.set(0, 60, rgb)
-            #     self.connection.show()
-            # except Exception as e:
-            #     print(e)
-            #     self.close()

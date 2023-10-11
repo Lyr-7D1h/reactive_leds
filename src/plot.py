@@ -26,6 +26,8 @@ class Plot:
         if on_close is not None:
             fig.canvas.mpl_connect("close_event", on_close)
 
+        ax.text(0, 1, "test")
+
         ax.axis((0, len(self.plotdata), -1, 1))
         ax.set_yticks([0])
         ax.yaxis.grid(True)
