@@ -1,3 +1,4 @@
-device="Starship/Matisse HD Audio Controller Analog Stereo"
+device=" Starship/Matisse HD Audio Controller Analog Surround 5.1"
 debug=true
-amount_leds=60
+amount_leds=240
+disabled_leds=[0, 1, 8, 12, 14, 15, 20, 25]
